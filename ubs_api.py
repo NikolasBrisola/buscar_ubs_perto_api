@@ -10,9 +10,7 @@ app = Flask(__name__)
 CORS(app)
 CSV_PATH = "Unidades_Basicas_Saude-UBS.csv"
 
-# ===============================
 # 🔹 Função de cálculo de distância (Haversine)
-# ===============================
 def calcular_distancia(lat1, lon1, lat2, lon2):
     """Calcula a distância entre dois pontos (em km)"""
     R = 6371  # Raio médio da Terra em km
@@ -23,15 +21,17 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     return R * c
 
-# ===============================
 # 🔹 Rota principal
-# ===============================
 @app.route("/ubs/perto", methods=["GET"])
 def buscar_ubs():
     """Busca UBS mais próximas com base no CEP informado"""
-    cep = request.args.get("cep")
-    if not cep:
-        return jsonify({"erro": "CEP não informado"}), 400
+
+    # 🧠 Validação e limpeza do CEP
+    cep = request.args.get("cep", "").strip()
+    cep = "".join(filter(str.isdigit, cep))  # mantém apenas números
+
+    if not cep or len(cep) != 8:
+        return jsonify({"erro": "CEP inválido. Use apenas números com 8 dígitos."}), 400
 
     print(f"\n🔍 Buscando UBS para o CEP: {cep}")
 
@@ -50,8 +50,6 @@ def buscar_ubs():
 
     if not cidade or not uf or not ibge_codigo:
         return jsonify({"erro": "CEP inválido ou sem código IBGE"}), 400
-
-    print(f"🏙️ Cidade identificada: {cidade} ({uf}), IBGE: {ibge_codigo}")
 
     # 2️⃣ Obter coordenadas aproximadas do CEP
     lat_usuario = lon_usuario = None
@@ -122,9 +120,7 @@ def buscar_ubs():
 
     return jsonify(resposta_final)
 
-# ===============================
 # 🚀 Execução principal
-# ===============================
 if __name__ == "__main__":
     print("🏥 API Consulta Certa - UBS iniciando com tratamento de erros...")
     print("Acesse: http://127.0.0.1:5000/ubs/perto?cep=01001000")
